@@ -1,12 +1,22 @@
 import { createMiddleware } from "hono/factory";
 import knex, { type Knex } from "knex";
+import PGDialect from "knex/lib/dialects/postgres";
+import pg from "pg";
 import { isDev } from "../config";
+
+// Knex loads pg via require('pg') which bundlers can't trace.
+// Subclass the dialect to provide pg directly.
+class PGClient extends PGDialect {
+  _driver() {
+    return pg;
+  }
+}
 
 export let db: Knex;
 
 function initDb(connectionString: string) {
   if (db) return;
-  db = knex({ client: "pg", connection: connectionString });
+  db = knex({ client: PGClient as any, connection: connectionString });
 }
 
 /**
