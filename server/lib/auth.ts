@@ -12,6 +12,53 @@ const COOKIE_CACHE_MAX_AGE_SECONDS = 60 * 5; // 5 minutes
 // JWT config
 const JWT_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
+// PBKDF2 password hashing — fast enough for Workers free tier CPU limits
+const PBKDF2_ITERATIONS = 100_000;
+const PBKDF2_HASH = "SHA-256";
+const PBKDF2_KEY_LENGTH = 256; // bits
+const SALT_LENGTH = 16; // bytes
+const PBKDF2_PREFIX = "pbkdf2:";
+
+function toHex(buf: ArrayBuffer): string {
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function fromHex(hex: string): Uint8Array {
+  return new Uint8Array(hex.match(/.{2}/g)!.map((b) => parseInt(b, 16)));
+}
+
+async function pbkdf2Hash(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+  const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
+  const derived = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: PBKDF2_HASH },
+    key,
+    PBKDF2_KEY_LENGTH,
+  );
+  return `${PBKDF2_PREFIX}${toHex(salt)}:${toHex(derived)}`;
+}
+
+async function pbkdf2Verify(stored: string, password: string): Promise<boolean> {
+  const unprefixed = stored.slice(PBKDF2_PREFIX.length);
+  const [saltHex, hashHex] = unprefixed.split(":");
+  if (!saltHex || !hashHex) return false;
+  const encoder = new TextEncoder();
+  const salt = fromHex(saltHex);
+  const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
+  const derived = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: PBKDF2_HASH },
+    key,
+    PBKDF2_KEY_LENGTH,
+  );
+  return toHex(derived) === hashHex;
+}
+
+async function verifyPassword({ hash, password }: { hash: string; password: string }): Promise<boolean> {
+  if (!hash.startsWith(PBKDF2_PREFIX)) return false;
+  return pbkdf2Verify(hash, password);
+}
+
 export interface JWTPayload {
   userId: string;
   email: string;
@@ -35,7 +82,10 @@ function createAuthInstance(connectionString: string, env: AuthEnv) {
     baseURL: env.betterAuthUrl,
     basePath: "/api/auth",
     database: new Pool({ connectionString }),
-    emailAndPassword: { enabled: true },
+    emailAndPassword: {
+      enabled: true,
+      password: { hash: pbkdf2Hash, verify: verifyPassword },
+    },
     socialProviders: {
       github: {
         clientId: env.githubClientId || "",
