@@ -1,10 +1,17 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/cloudflare-pages";
-import api from "./routes/api";
+import { trpcServer } from "@hono/trpc-server";
+import { appRouter } from "./trpc";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
-app.route("/api", api);
+app.use(
+  "/api/trpc/*",
+  trpcServer({
+    router: appRouter,
+    createContext: (_opts, c) => ({ env: c.env }),
+  }),
+);
 
 app.get("/assets/*", serveStatic());
 

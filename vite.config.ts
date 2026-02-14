@@ -13,4 +13,12 @@ export default defineConfig({
       "/api": "http://localhost:8787",
     },
   },
+  optimizeDeps: {
+    include: [
+      "@trpc/client",
+      "@trpc/react-query",
+      "@tanstack/react-query",
+      "superjson",
+    ],
+  },
 });
