@@ -18,7 +18,12 @@ app.use(requestId);
 app.use(requestLogger);
 
 if (isDev) {
-  app.use("/api/*", cors({ origin: "http://localhost:5173" }));
+  app.use(
+    "/api/*",
+    cors({
+      origin: (origin) => (origin.startsWith("http://localhost:") ? origin : ""),
+    }),
+  );
 }
 
 app.use("/api/*", dbMiddleware);
