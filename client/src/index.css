@@ -122,3 +122,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer base {
+  button,
+  [role="button"],
+  a,
+  select,
+  summary,
+  [type="button"],
+  [type="reset"],
+  [type="submit"] {
+    cursor: pointer;
+  }
+}
