@@ -1,6 +1,18 @@
-import build from "@hono/vite-build/cloudflare-pages";
+import build from "@hono/vite-build/cloudflare-workers";
 import devServer from "@hono/vite-dev-server";
 import { defineConfig, loadEnv } from "vite";
+
+/** Only these env vars are injected into the dev server bundle via `define`. */
+const SERVER_ENV_KEYS = [
+  "DATABASE_URL",
+  "BETTER_AUTH_SECRET",
+  "BETTER_AUTH_URL",
+  "GITHUB_CLIENT_ID",
+  "GITHUB_CLIENT_SECRET",
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_CLIENT_SECRET",
+  "CLIENT_URL",
+];
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === "development";
@@ -15,7 +27,12 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define: isDev
-      ? { "process.env.DATABASE_URL": JSON.stringify(env.DATABASE_URL) }
+      ? Object.fromEntries(
+          SERVER_ENV_KEYS.filter((k) => k in env).map((k) => [
+            `process.env.${k}`,
+            JSON.stringify(env[k]),
+          ]),
+        )
       : undefined,
     ssr: {
       resolve: {

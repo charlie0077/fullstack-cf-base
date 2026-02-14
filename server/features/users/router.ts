@@ -1,11 +1,11 @@
-import { router, publicProcedure } from "../../trpc/trpc";
+import { router, protectedProcedure } from "../../trpc/trpc";
 import * as UserService from "./service";
 import { createUserInput } from "./schema";
 
 export const usersRouter = router({
-  list: publicProcedure.query(() => UserService.list()),
+  list: protectedProcedure.query(() => UserService.list()),
 
-  create: publicProcedure
+  create: protectedProcedure
     .input(createUserInput)
     .mutation(({ input }) => UserService.create(input)),
 });

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import reactLogo from "../assets/react.svg";
-import viteLogo from "/vite.svg";
 import { trpc } from "../lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Home() {
   const [count, setCount] = useState(0);
+  const { isAuthenticated, session } = useAuth();
   const { data, error, isLoading, refetch } = trpc.hello.useQuery(
     {},
     { enabled: false },
@@ -22,22 +23,17 @@ export default function Home() {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col items-center gap-6 p-8">
-      <div className="flex gap-8">
-        <a href="https://vite.dev" target="_blank" rel="noopener noreferrer">
-          <img src={viteLogo} className="h-24 transition-all hover:drop-shadow-[0_0_2em_#646cffaa]" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-          <img src={reactLogo} className="h-24 animate-spin transition-all [animation-duration:20s] hover:drop-shadow-[0_0_2em_#61dafbaa]" alt="React logo" />
-        </a>
-      </div>
-
-      <h1 className="text-4xl font-bold">Vite + React</h1>
+      <h1 className="text-4xl font-bold">my-hono-app</h1>
 
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Counter</CardTitle>
           <CardDescription>
-            Edit <code className="text-sm font-mono bg-muted px-1 py-0.5 rounded">src/App.tsx</code> and save to test HMR
+            Edit{" "}
+            <code className="text-sm font-mono bg-muted px-1 py-0.5 rounded">
+              src/App.tsx
+            </code>{" "}
+            and save to test HMR
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
@@ -49,7 +45,11 @@ export default function Home() {
 
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>API</CardTitle>
+          <CardTitle>Public API</CardTitle>
+          <CardDescription>
+            Calls the public <code className="font-mono">hello</code> tRPC
+            route — no auth required.
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-3">
           <Button
@@ -70,13 +70,30 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      <Button variant="link" asChild>
-        <Link to="/users">Go to Users &rarr;</Link>
-      </Button>
-
-      <p className="text-sm text-muted-foreground">
-        Click on the Vite and React logos to learn more
-      </p>
+      <div className="flex gap-3 items-center">
+        {isAuthenticated ? (
+          <>
+            <span className="text-sm text-muted-foreground">
+              Signed in as {session?.user.email}
+            </span>
+            <Button variant="link" asChild>
+              <Link to="/users">Users (protected)</Link>
+            </Button>
+            <Button variant="outline" onClick={() => signOut()}>
+              Sign out
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button asChild>
+              <Link to="/login">Sign in</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/signup">Sign up</Link>
+            </Button>
+          </>
+        )}
+      </div>
     </main>
   );
 }
