@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { serveStatic } from "hono/cloudflare-pages";
 import { trpcServer } from "@hono/trpc-server";
 import { appRouter } from "./trpc";
+import { dbMiddleware } from "./db";
 import { ok } from "./util/response";
 import { requestId } from "./middleware/requestId";
 import { requestLogger } from "./middleware/requestLogger";
@@ -13,6 +14,8 @@ const app = new Hono<{ Bindings: CloudflareBindings }>();
 setupErrorHandler(app);
 app.use(requestId);
 app.use(requestLogger);
+
+app.use("/api/*", dbMiddleware);
 
 app.use(
   "/api/trpc/*",

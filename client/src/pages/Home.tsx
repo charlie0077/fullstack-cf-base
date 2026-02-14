@@ -37,6 +37,9 @@ export default function Home() {
         {error && <p role="alert">Error: {error.message}</p>}
         {data && !error && <p>{data.message}</p>}
       </div>
+      <div className="card">
+        <a href="/users">Go to Users →</a>
+      </div>
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>

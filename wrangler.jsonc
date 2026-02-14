@@ -20,7 +20,6 @@
     {
       "binding": "HYPERDRIVE",
       "id": "7155e8ec72d0482fbc0513a5947287c9",
-      "localConnectionString": "postgres://postgres:postgres@localhost:5432/myapp_dev",
     },
   ],
   /**
