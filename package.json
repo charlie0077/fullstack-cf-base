@@ -2,19 +2,28 @@
 	"name": "my-hono-app",
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
-		"build": "vite build",
-		"preview": "vite build && wrangler pages dev",
-		"deploy": "npm run build && wrangler pages deploy",
+		"dev": "concurrently -n client,server -c blue,green \"bun run dev:client\" \"bun run dev:server\"",
+		"dev:client": "vite",
+		"dev:server": "vite dev --config vite.config.server.ts",
+		"build": "vite build && vite build --config vite.config.server.ts",
+		"preview": "bun run build && wrangler pages dev dist",
+		"deploy": "bun run build && wrangler pages deploy dist",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
 	},
 	"dependencies": {
-		"hono": "^4.11.9"
+		"hono": "^4.11.9",
+		"react": "^19.2.4",
+		"react-dom": "^19.2.4",
+		"react-router": "^7.13.0"
 	},
 	"devDependencies": {
 		"@hono/vite-build": "^1.2.0",
 		"@hono/vite-dev-server": "^0.18.2",
 		"@types/node": "^25.2.3",
+		"@types/react": "^19.2.14",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^5.1.4",
+		"concurrently": "^9.2.1",
 		"vite": "^6.3.5",
 		"wrangler": "^4.65.0"
 	}
