@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { trpc } from "../lib/api";
-import "../App.css";
+
 
 export default function Users() {
   const [name, setName] = useState("");
