@@ -14,26 +14,33 @@ class PGClient extends PGDialect {
 
 export let db: Knex;
 
-function initDb(connectionString: string) {
-  if (db) return;
-  db = knex({ client: PGClient as any, connection: connectionString });
+const POOL_CONFIG = { min: 0, max: 1 } as const;
+
+function createKnexInstance(connectionString: string): Knex {
+  return knex({
+    client: PGClient as any,
+    connection: connectionString,
+    pool: POOL_CONFIG,
+  });
 }
 
 /**
- * Initializes the db connection on the first request (no-op after that).
- * - Dev: uses DATABASE_URL from process.env (injected by Vite)
- * - Production: uses Hyperdrive connection string from Cloudflare binding
- *
- * Hyperdrive is a Cloudflare binding only accessible via the request context,
- * so initialization must happen in middleware rather than at module level.
+ * Initializes the db connection per request.
+ * - Dev: reuses a single Knex instance (stable DATABASE_URL)
+ * - Production: creates a fresh instance per request because Hyperdrive
+ *   manages connection pooling and stale TCP connections in Knex's pool
+ *   cause unhandled errors (Cloudflare error 1101) that crash the Worker.
  */
 export const dbMiddleware = createMiddleware<{
   Bindings: CloudflareBindings;
 }>(async (c, next) => {
   if (isDev) {
-    initDb(process.env.DATABASE_URL!);
+    if (!db) db = createKnexInstance(process.env.DATABASE_URL!);
   } else {
-    initDb(c.env.HYPERDRIVE.connectionString);
+    db = createKnexInstance(c.env.HYPERDRIVE.connectionString);
   }
   await next();
+  if (!isDev) {
+    await db.destroy();
+  }
 });
