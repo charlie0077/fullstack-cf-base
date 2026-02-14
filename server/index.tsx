@@ -58,4 +58,15 @@ app.get("/assets/*", serveStatic());
 
 app.get("*", serveStatic({ path: "./index.html" }));
 
-export default app;
+export default {
+  fetch: app.fetch,
+  async scheduled(event: ScheduledEvent, env: CloudflareBindings) {
+    switch (event.cron) {
+      case "0 * * * *":
+        console.log("Pinging Google...");
+        const res = await fetch("https://www.google.com");
+        console.log(`Google responded: ${res.status}`);
+        break;
+    }
+  },
+};

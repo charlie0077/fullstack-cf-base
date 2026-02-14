@@ -11,6 +11,9 @@
   "observability": {
     "enabled": true,
   },
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
   "compatibility_flags": ["nodejs_compat"],
   /**
    * Hyperdrive
