@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { serveStatic } from "hono/cloudflare-pages";
 import { trpcServer } from "@hono/trpc-server";
 import { appRouter } from "./trpc";
@@ -7,6 +8,7 @@ import { ok } from "./util/response";
 import { requestId } from "./middleware/requestId";
 import { requestLogger } from "./middleware/requestLogger";
 import { setupErrorHandler } from "./middleware/errorHandler";
+import { isDev } from "./config";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -14,6 +16,10 @@ const app = new Hono<{ Bindings: CloudflareBindings }>();
 setupErrorHandler(app);
 app.use(requestId);
 app.use(requestLogger);
+
+if (isDev) {
+  app.use("/api/*", cors({ origin: "http://localhost:5173" }));
+}
 
 app.use("/api/*", dbMiddleware);
 
