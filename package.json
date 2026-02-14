@@ -9,7 +9,13 @@
 		"preview": "bun run build && wrangler pages dev dist",
 		"deploy": "bun run build && wrangler pages deploy dist",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings",
-		"lint": "eslint ."
+		"lint": "eslint .",
+		"migrate": "tsx --env-file=.env node_modules/knex/bin/cli.js migrate:latest --knexfile server/db/knexfile.ts",
+		"migrate:prod": "tsx --env-file=.env.prod node_modules/knex/bin/cli.js migrate:latest --knexfile server/db/knexfile.ts --env production",
+		"migrate:rollback": "tsx --env-file=.env node_modules/knex/bin/cli.js migrate:rollback --knexfile server/db/knexfile.ts",
+		"migrate:rollback:prod": "tsx --env-file=.env.prod node_modules/knex/bin/cli.js migrate:rollback --knexfile server/db/knexfile.ts --env production",
+		"migrate:make": "tsx --env-file=.env node_modules/knex/bin/cli.js migrate:make --knexfile server/db/knexfile.ts",
+		"hyperdrive:create": "wrangler hyperdrive create my-db --connection-string"
 	},
 	"dependencies": {
 		"@hono/trpc-server": "^0.4.2",
@@ -18,6 +24,8 @@
 		"@trpc/react-query": "^11.10.0",
 		"@trpc/server": "^11.10.0",
 		"hono": "^4.11.9",
+		"knex": "^3.1.0",
+		"pg": "^8.18.0",
 		"react": "^19.2.4",
 		"react-dom": "^19.2.4",
 		"react-router": "^7.13.0",
@@ -37,6 +45,7 @@
 		"eslint-plugin-react-hooks": "^7.0.1",
 		"eslint-plugin-react-refresh": "^0.5.0",
 		"globals": "^17.3.0",
+		"tsx": "^4.21.0",
 		"typescript-eslint": "^8.55.0",
 		"vite": "^6.3.5",
 		"wrangler": "^4.65.0"
