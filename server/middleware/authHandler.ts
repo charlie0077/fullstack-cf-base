@@ -32,44 +32,17 @@ authHandler.on(["GET", "POST"], "/*", async (c) => {
   const response = await auth.handler(c.req.raw);
   const url = new URL(c.req.url);
 
-  // OAuth callback — inject JWT into redirect URL
-  const isOAuthCallback = url.pathname.includes("/callback/");
-  if (isOAuthCallback && response.status >= 300 && response.status < 400) {
-    const location = response.headers.get("location");
-    if (location) {
-      const session = await auth.api.getSession({
-        headers: c.req.raw.headers,
-      });
-
-      if (session?.user) {
-        const jwtToken = await generateJWT(
-          {
-            userId: session.user.id,
-            email: session.user.email,
-            name: session.user.name,
-          },
-          secret,
-        );
-
-        const redirectUrl = new URL(location);
-        redirectUrl.hash = `token=${jwtToken}`;
-
-        const newResponse = new Response(null, {
-          status: response.status,
-          headers: new Headers(response.headers),
-        });
-        newResponse.headers.set("location", redirectUrl.toString());
-        return newResponse;
-      }
-    }
-  }
+  // OAuth callback: better-auth sets a session cookie on redirect.
+  // The client exchanges that cookie for a JWT via GET /api/auth/token.
 
   // Email/password sign-in/sign-up — add JWT to response header
   const isAuthEndpoint =
     url.pathname.includes("/sign-in") || url.pathname.includes("/sign-up");
   if (isAuthEndpoint && response.ok) {
     const clonedResponse = response.clone();
-    const data = await clonedResponse.json();
+    const data = (await clonedResponse.json()) as {
+      user?: { id: string; email: string; name: string };
+    };
 
     if (data.user) {
       const jwtToken = await generateJWT(

@@ -1,39 +1,35 @@
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
+  AUTH_TOKEN_CHANGE_EVENT,
   getToken,
   getCurrentUser,
   initializeAuth,
+  exchangeSessionForToken,
   removeToken,
 } from "@/lib/auth";
 
-// Simple store for auth state changes
-let listeners: Array<() => void> = [];
-const subscribe = (listener: () => void) => {
-  listeners.push(listener);
-  return () => {
-    listeners = listeners.filter((l) => l !== listener);
-  };
-};
-const notifyListeners = () => listeners.forEach((l) => l());
+const OAUTH_PENDING_KEY = "oauth_pending";
 
-// Hook localStorage to notify on token changes
-const originalSetItem = localStorage.setItem.bind(localStorage);
-const originalRemoveItem = localStorage.removeItem.bind(localStorage);
-localStorage.setItem = (key: string, value: string) => {
-  originalSetItem(key, value);
-  if (key === "auth_token") notifyListeners();
-};
-localStorage.removeItem = (key: string) => {
-  originalRemoveItem(key);
-  if (key === "auth_token") notifyListeners();
+// Subscribe to auth token changes via custom event (fired by setToken/removeToken)
+const subscribe = (listener: () => void) => {
+  window.addEventListener(AUTH_TOKEN_CHANGE_EVENT, listener);
+  return () => window.removeEventListener(AUTH_TOKEN_CHANGE_EVENT, listener);
 };
 
 export function useAuth() {
+  const [isExchanging, setIsExchanging] = useState(false);
+
   // initializeAuth is synchronous (checks localStorage + URL hash)
-  const [isInitialized] = useState(() => {
-    initializeAuth();
-    return true;
-  });
+  const [hasToken] = useState(() => initializeAuth());
+
+  // After OAuth redirect, exchange session cookie for JWT
+  useEffect(() => {
+    if (hasToken) return;
+    if (!sessionStorage.getItem(OAUTH_PENDING_KEY)) return;
+    sessionStorage.removeItem(OAUTH_PENDING_KEY);
+    setIsExchanging(true);
+    exchangeSessionForToken().finally(() => setIsExchanging(false));
+  }, [hasToken]);
 
   const token = useSyncExternalStore(
     subscribe,
@@ -56,7 +52,7 @@ export function useAuth() {
   return {
     session,
     user,
-    isPending: !isInitialized,
+    isPending: isExchanging,
     isAuthenticated: !!token,
     logout: () => {
       removeToken();

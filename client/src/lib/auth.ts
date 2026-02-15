@@ -1,6 +1,7 @@
 import { createAuthClient } from "better-auth/react";
 
-const TOKEN_KEY = "auth_token";
+export const TOKEN_KEY = "auth_token";
+export const AUTH_TOKEN_CHANGE_EVENT = "auth-token-change";
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 // Token management
@@ -8,35 +9,34 @@ export const getToken = () => localStorage.getItem(TOKEN_KEY) || undefined;
 
 export const setToken = (token: string) => {
   localStorage.setItem(TOKEN_KEY, token);
+  window.dispatchEvent(new Event(AUTH_TOKEN_CHANGE_EVENT));
 };
 
 export const removeToken = () => {
   localStorage.removeItem(TOKEN_KEY);
-};
-
-// Check URL hash for JWT token (after OAuth redirect)
-export const extractTokenFromUrl = (): string | null => {
-  const hash = window.location.hash;
-  if (hash.startsWith("#token=")) {
-    const token = hash.slice(7);
-    window.history.replaceState(
-      null,
-      "",
-      window.location.pathname + window.location.search,
-    );
-    return token;
-  }
-  return null;
+  window.dispatchEvent(new Event(AUTH_TOKEN_CHANGE_EVENT));
 };
 
 // Initialize auth — call on app startup
-export const initializeAuth = (): boolean => {
-  const urlToken = extractTokenFromUrl();
-  if (urlToken) {
-    setToken(urlToken);
-    return true;
+export const initializeAuth = (): boolean => !!getToken();
+
+// Exchange session cookie for JWT (after OAuth redirect sets a cookie)
+export const exchangeSessionForToken = async (): Promise<boolean> => {
+  try {
+    const res = await fetch(
+      `${API_URL}/api/auth/token`,
+      { credentials: "include" },
+    );
+    if (!res.ok) return false;
+    const data = (await res.json()) as { token?: string };
+    if (data.token) {
+      setToken(data.token);
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
   }
-  return !!getToken();
 };
 
 // Parse JWT to get user info (client-side only — server verifies)
@@ -87,6 +87,7 @@ export const signIn = {
   },
   social: async (provider: "github" | "google") => {
     const callbackURL = window.location.origin;
+    sessionStorage.setItem("oauth_pending", "1");
     await authClient.signIn.social({ provider, callbackURL });
   },
 };

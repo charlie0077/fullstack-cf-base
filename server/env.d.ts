@@ -1,5 +1,7 @@
 // Auth-related env bindings (set via `wrangler secret put`)
 interface CloudflareBindings {
+  ASSETS: Fetcher;
+  HYPERDRIVE: { connectionString: string };
   BETTER_AUTH_SECRET: string;
   BETTER_AUTH_URL: string;
   GITHUB_CLIENT_ID: string;

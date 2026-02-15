@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { serveStatic } from "hono/cloudflare-workers";
+
 import { trpcServer } from "@hono/trpc-server";
 import { appRouter } from "./trpc";
 import { dbMiddleware } from "./db";
@@ -23,7 +23,8 @@ if (isDev) {
   app.use(
     "/api/*",
     cors({
-      origin: (origin) => (origin.startsWith("http://localhost:") ? origin : ""),
+      origin: (origin) => (origin?.startsWith("http://localhost:") ? origin : ""),
+      credentials: true,
       exposeHeaders: ["set-auth-token"],
     }),
   );
@@ -54,9 +55,8 @@ app.get("/api/health", (c) => {
 });
 
 
-app.get("/assets/*", serveStatic());
-
-app.get("*", serveStatic({ path: "./index.html" }));
+// Static assets served by Cloudflare Workers Assets binding (SPA fallback)
+app.get("*", (c) => c.env.ASSETS.fetch(c.req.raw));
 
 export default {
   fetch: app.fetch,
