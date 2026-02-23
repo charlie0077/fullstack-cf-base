@@ -27,7 +27,7 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "7155e8ec72d0482fbc0513a5947287c9",
+      "id": "<YOUR_HYPERDRIVE_ID>",
       // Caching is disabled (configured via: wrangler hyperdrive update <id> --caching-disabled true)
       // Reason: cached query results break auth sign-in (stale "user not found")
     },
