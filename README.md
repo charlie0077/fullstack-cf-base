@@ -138,8 +138,9 @@ Client: http://localhost:5173 | Server: http://localhost:8787
 
 | Script | Description |
 |---|---|
-| `bun run dev` | Start client + server in dev mode |
-| `bun run build` | Build client and server for production |
+| `bun run dev` | Start client + server in dev mode (server uses restart-on-save watcher) |
+| `bun run dev:server` | Server only, restart-on-save (`server/**/*.ts`) |
+| `bun run build` | Build client assets for production (server is bundled by Wrangler from `server/index.tsx`) |
 | `bun run preview` | Build and run locally with `wrangler dev` |
 | `bun run deploy` | Build and deploy to Cloudflare Workers |
 | `bun run test` | Run tests (Vitest, watch mode) |
@@ -175,7 +176,6 @@ Client: http://localhost:5173 | Server: http://localhost:8787
 ├── scripts/             # Deployment utilities
 ├── wrangler.jsonc       # Cloudflare Workers config
 ├── vite.config.ts       # Client build config
-└── vite.config.server.ts # Server build config (Workers)
 ```
 
 ---

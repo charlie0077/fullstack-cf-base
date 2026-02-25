@@ -6,7 +6,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "my-hono-app",
   "compatibility_date": "2026-02-12",
-  "main": "./dist/index.js",
+  "main": "./server/index.tsx",
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

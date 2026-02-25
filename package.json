@@ -2,10 +2,10 @@
 	"name": "my-hono-app",
 	"type": "module",
 	"scripts": {
-		"dev": "concurrently -n client,server -c blue,green \"bun run dev:client\" \"bun run dev:server\"",
+		"dev": "concurrently --kill-others-on-fail -n client,server -c blue,green \"bun run dev:client\" \"bun run dev:server\"",
 		"dev:client": "vite",
-		"dev:server": "vite dev --config vite.config.server.ts",
-		"build": "vite build && vite build --config vite.config.server.ts",
+		"dev:server": "tsx watch --env-file=.env --clear-screen=false --include='server/**/*.ts' --include='server/**/*.tsx' server/dev.ts",
+		"build": "vite build",
 		"preview": "bun run build && wrangler dev",
 		"deploy": "bun run build && wrangler deploy",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings",
@@ -48,8 +48,6 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@hono/vite-build": "^1.2.0",
-		"@hono/vite-dev-server": "^0.18.2",
 		"@types/node": "^25.2.3",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
